@@ -1,33 +1,93 @@
 import './css/styles.css';
-import { fetchCountries } from './fetchCountries.js';
+import { Notify } from 'notiflix/build/notiflix-notify-aio';
+import { fetchCountries } from './fetch-countries.js';
+import { getRefs } from './get-refs.js';
 
-const a = {};
-function countryCardTpl({ flags, name, capital, population, languages }) {
-  const murkup = `<div class='country__main'>
-  <img src=${flags.svg} alt='${name.official}' class='country__flag' />
+import debounce from 'lodash.debounce';
+const DEBOUNCE_DELAY = 300;
+
+function countryCardTpl(countries) {
+  const { flags, name, capital, population, languages } = countries[0];
+  const lang = Object.values(languages).join(', ');
+  return `<div class='country__main'>
+  <div class="img_thumb"><img src="${flags.svg}" alt="${
+    name.official
+  }" class='country__flag'></div>
   <h2 class='country__name'>${name.official}</h2>
 </div>
-<p class='country__capital'>Capital:${capital[0]}</p>
-<p class='country__population'>Population: ${population}</p>
-<p class='country__languages'>Languages: ${languages.ukr}</p>`;
-  console.log(murkup);
-  return murkup;
+<ul class='content'>
+  ${
+    name
+      ? `<li class='content__item'><span class = 'item__title'>Capital:</span> ${capital[0]}</li>`
+      : ''
+  }
+  ${
+    population
+      ? `<li class='content__item'><span class = 'item__title'>Population:</span> ${population}</li>`
+      : ''
+  }
+  ${
+    lang
+      ? `<li class='content__item'><span class = 'item__title'>Languages:</span> ${lang}</li>`
+      : ''
+  }
+</ul>`;
 }
 
-const refs = {
-  countryText: document.querySelector('#search-box'),
-  countryList: document.querySelector('.country-list'),
-  countryInfo: document.querySelector('.country-info'),
-};
+function countryListMarkup(countryList) {
+  return countryList
+    .map(({ name, flags }) => {
+      return `
+    <li class="country__item">
+  <div class="img_thumb"><img src="${flags.svg}" alt="${name.official}" class='country__flag'></div>
+  <h2 class='country__name'>${name.official}</h2>
+</li>
+    `;
+    })
+    .join('');
+}
 
-// https://restcountries.com/v3.1/name/{name}
-// filter: https://restcountries.com/v2/{service}?fields={field},{field},{field}
+const refs = getRefs();
 
-fetchCountries('poland')
-  .then(renderCountryCard)
-  .catch(error => console.log(error));
+refs.searchBox.addEventListener('input', debounce(onSearch, DEBOUNCE_DELAY));
 
-function renderCountryCard(country) {
-  const markup = countryCardTpl(country);
-  refs.countryInfo.insertAdjacentHTML('beforeend', markup);
+function onSearch(e) {
+  const searchQuery = e.target.value.trim();
+  if (searchQuery === '') {
+    clearContent();
+    return;
+  }
+
+  fetchCountries(searchQuery).then(renderContent).catch(onFetchError);
+}
+
+function renderCountryCard(countries) {
+  const markup = countryCardTpl(countries);
+  refs.countryInfo.innerHTML = markup;
+}
+
+function renderCountryList(countries) {
+  //   clearContent();
+  const markup = countryListMarkup(countries);
+  refs.countryInfo.innerHTML = markup;
+}
+
+function onFetchError(error) {
+  Notify.failure('Oops, there is no country with that name');
+}
+
+function clearContent() {
+  refs.countryInfo.innerHTML = '';
+}
+
+function renderContent(countries) {
+  if (countries.length >= 10) {
+    clearContent();
+    Notify.info('Too many matches found. Please enter a more specific name.');
+  } else if (countries.length >= 2 && countries.length < 10) {
+    clearContent();
+    renderCountryList(countries);
+  } else if (countries.length === 1) {
+    renderCountryCard(countries);
+  }
 }
