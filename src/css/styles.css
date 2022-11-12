@@ -72,3 +72,9 @@ input:focus {
   outline: none;
   border-color: rgb(23, 121, 138);
 }
+.country__link {
+  text-decoration: none;
+  color: inherit;
+  display: flex;
+  gap: 10px;
+}

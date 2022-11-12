@@ -35,7 +35,7 @@ function countryCardTpl({ flags, name, capital, population, languages }) {
 refs.countriesSection.addEventListener('click', onItemClick);
 
 function onItemClick(e) {
-  if (!e.target.classList.contains('country__item')) {
+  if (!e.target.classList.contains('country__link')) {
     return;
   }
   refs.searchBox.value = e.target.textContent;
@@ -46,9 +46,9 @@ function countryListMarkup(countryList) {
   return countryList
     .map(({ name, flags }) => {
       return `
-    <li class="country__item">
+    <li class="country__item"><a class = 'country__link' href="#">
  <img src="${flags.svg}" alt="${name.common}" class = 'country__flag'>
-   ${name.common}
+   ${name.common}</a>
 </li>
     `;
     })
