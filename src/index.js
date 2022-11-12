@@ -7,7 +7,7 @@ import debounce from 'lodash.debounce';
 const DEBOUNCE_DELAY = 300;
 const refs = getRefs();
 
-function countryCardTpl([{ flags, name, capital, population, languages }]) {
+function countryCardTpl({ flags, name, capital, population, languages }) {
   const lang = Object.values(languages).join(', ');
   return `<div class='country__main'>
   <img src="${flags.svg}" alt="${name.common}" class='country__flag'>
@@ -30,6 +30,16 @@ function countryCardTpl([{ flags, name, capital, population, languages }]) {
       : ''
   }
 </ul>`;
+}
+
+refs.countriesSection.addEventListener('click', onItemClick);
+
+function onItemClick(e) {
+  if (!e.target.classList.contains('country__item')) {
+    return;
+  }
+  refs.searchBox.value = e.target.textContent;
+  refs.searchBox.dispatchEvent(new Event('input'));
 }
 
 function countryListMarkup(countryList) {
@@ -66,9 +76,9 @@ function onSearch(e) {
     .catch(onFetchError);
 }
 
-function renderCountryCard(countries) {
+function renderCountryCard(country) {
   clearContent();
-  const markup = countryCardTpl(countries);
+  const markup = countryCardTpl(country);
   refs.countryInfo.innerHTML = markup;
 }
 
@@ -94,6 +104,6 @@ function renderContent(countries) {
   } else if (countries.length >= 2 && countries.length < 10) {
     renderCountryList(countries);
   } else if (countries.length === 1) {
-    renderCountryCard(countries);
+    renderCountryCard(countries[0]);
   }
 }
